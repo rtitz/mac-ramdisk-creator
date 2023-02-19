@@ -29,10 +29,10 @@ func hdiUtilAttach(size int) (string, error) {
 		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return output, errors.New("FAILED TO EXECUTE HDIUTIL ATTACH")
 	}
-	item := bufio.NewScanner(strings.NewReader(out.String()))
+	/*item := bufio.NewScanner(strings.NewReader(out.String()))
 	for item.Scan() {
 		fmt.Println(item.Text())
-	}
+	}*/
 	output = out.String()
 	output = strings.TrimSpace(output)
 	return output, nil
@@ -50,10 +50,10 @@ func hdiUtilDetach(device string) error {
 		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return errors.New("FAILED TO EXECUTE HDIUTIL DETACH")
 	}
-	item := bufio.NewScanner(strings.NewReader(out.String()))
+	/*item := bufio.NewScanner(strings.NewReader(out.String()))
 	for item.Scan() {
 		fmt.Println(item.Text())
-	}
+	}*/
 	return nil
 }
 
@@ -68,7 +68,7 @@ func diskInfo(name string) (string, error) {
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-		return output, errors.New("FAILED TO GET DISK INFO")
+		return output, errors.New("DISK NOT FOUND")
 	}
 	item := bufio.NewScanner(strings.NewReader(out.String()))
 	for item.Scan() {
@@ -97,10 +97,10 @@ func ejectRamdisk(device string) error {
 		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return errors.New("FAILED TO EJECT RAMDISK")
 	}
-	item := bufio.NewScanner(strings.NewReader(out.String()))
+	/*item := bufio.NewScanner(strings.NewReader(out.String()))
 	for item.Scan() {
 		fmt.Println(item.Text())
-	}
+	}*/
 	return nil
 }
 
@@ -118,10 +118,10 @@ func createRamdisk(size int, name, hdiUtil_output string) error {
 		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return errors.New("FAILED TO CREATE RAMDISK")
 	}
-	item := bufio.NewScanner(strings.NewReader(out.String()))
+	/*item := bufio.NewScanner(strings.NewReader(out.String()))
 	for item.Scan() {
 		fmt.Println(item.Text())
-	}
+	}*/
 	return nil
 }
 
@@ -131,13 +131,13 @@ func calculateSizeForDiskutil(sizeInMB int) int {
 
 func main() {
 	// Define and check parameters
-	sizeInMB := flag.Int("size", 0, "Specify the size of the ramdisk in MB")
+	sizeInMB := flag.Int("size", 0, "Specify the size of the ramdisk in MB. (Minimum is 10 MB)")
 	name := flag.String("name", "", "Specify name of the ramdisk")
 	eject := flag.Bool("eject", false, "Set this parameter to eject a previous created ramdisk")
 	flag.Parse()
 
-	if *sizeInMB == 0 && !*eject {
-		fmt.Printf("Parameter missing! Try again and specify the following parameters.\n\nParameter list:\n\n")
+	if (*sizeInMB == 0 || *sizeInMB < 10) && !*eject {
+		fmt.Printf("Parameter missing / wrong! Try again and specify the following parameters.\n\nParameter list:\n\n")
 		flag.PrintDefaults()
 		fmt.Printf("\n")
 		os.Exit(999)
@@ -147,12 +147,12 @@ func main() {
 	}
 	// End of: Define and check parameters
 
-	fmt.Printf("%s %s\n\n", variables.AppName, variables.AppVersion)
+	fmt.Printf("%s %s\n", variables.AppName, variables.AppVersion)
 
 	if !*eject {
-		fmt.Printf("Creating ramdisk '%s' with %s MB ...\n", *name, strconv.Itoa(*sizeInMB))
+		fmt.Printf("Creating ramdisk '%s' with %s MB ... ", *name, strconv.Itoa(*sizeInMB))
 	} else {
-		fmt.Printf("Ejecting ramdisk '%s' ...\n", *name)
+		fmt.Printf("Ejecting ramdisk '%s' ... ", *name)
 	}
 
 	if !*eject {
@@ -170,12 +170,15 @@ func main() {
 			log.Fatal(errhdiUtil.Error())
 		}
 	} else {
-		device, _ := diskInfo(*name)
+		device, errDiskInfo := diskInfo(*name)
+		if errDiskInfo != nil {
+			log.Fatal(errDiskInfo.Error())
+		}
 		errEjectRamdisk := ejectRamdisk(device)
 		if errEjectRamdisk != nil {
 			log.Fatal(errEjectRamdisk.Error())
 		}
 	}
-	fmt.Println("Finished!")
+	fmt.Printf("Finished!\n")
 	os.Exit(0)
 }
