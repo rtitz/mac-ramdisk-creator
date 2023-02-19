@@ -2,8 +2,10 @@ package main
 
 import (
   "fmt"
+
+  "github.com/rtitz/mac-ramdisk-creator/variables"
 )
 
 func main () {
-  fmt.Println("Ramdisk creator for MacOS")
+  fmt.Printf("%s %s\n\n", variables.AppName, variables.AppVersion)
 }
