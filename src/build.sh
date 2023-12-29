@@ -2,14 +2,14 @@
 
 platforms=( "darwin/arm64" "darwin/amd64" )
 
-package_name="mac-ramdisk-creator"
+package_name=$(cd .. && basename $(pwd) && cd - >/dev/null 2>&1)
 #version=$(git tag | tail -n1)
 output_directory="../bin/"
 
 mkdir -p $output_directory >/dev/null 2>&1
 
-#echo "Downloading required modules..."
-#go get -u && go mod tidy
+echo "Downloading required modules..."
+go get -u && go mod tidy
 
 for platform in "${platforms[@]}"
 do
